@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Step 1</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="topbar">
+  <h1 id="view-title">Today</h1>
+</header>
+
+<!-- One-time, calm notice area (e.g. storage unavailable). aria-live so screen
+     readers hear it without focus moving. -->
+<div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+
+<main id="main" tabindex="-1">
+
+  <section class="view" data-view="today" hidden>
+    <p class="empty">The schedule and today's plan arrive in a later phase.
+    Right now this is the app shell: navigation, saving, and backup all work.</p>
+    <p class="empty">You can set the theme and try export/import under
+    <a href="#/settings">Settings</a>.</p>
+  </section>
+
+  <section class="view" data-view="quiz" hidden>
+    <p class="empty">The question bank and quiz engine are built in the next
+    phase. When ready, blocks of 5–40 questions will run from here and resume
+    exactly where you left off.</p>
+  </section>
+
+  <section class="view" data-view="errors" hidden>
+    <p class="empty">Missed questions will collect here automatically once the
+    quiz engine exists. Nothing to review yet.</p>
+  </section>
+
+  <section class="view" data-view="progress" hidden>
+    <p class="empty">Practice-form scores (NBME, UWSA, Free 120) will be logged
+    and charted here in a later phase.</p>
+  </section>
+
+  <section class="view" data-view="glossary" hidden>
+    <p class="empty">The searchable glossary is built in a later phase.</p>
+  </section>
+
+  <section class="view" data-view="resources" hidden>
+    <p class="empty">The resource guide — what each tool is for and when — is
+    built in a later phase.</p>
+  </section>
+
+  <section class="view" data-view="timer" hidden>
+    <p class="empty">Focus timers, including a "just 5 minutes" mode, are built
+    in the final phase.</p>
+  </section>
+
+  <section class="view" data-view="more" hidden>
+    <nav aria-label="More sections">
+      <ul class="more-list">
+        <li><a class="more-link" href="#/progress">Progress<span class="more-sub">Practice-form scores and readiness</span></a></li>
+        <li><a class="more-link" href="#/glossary">Glossary<span class="more-sub">Searchable term reference</span></a></li>
+        <li><a class="more-link" href="#/resources">Resources<span class="more-sub">What each study tool is for</span></a></li>
+        <li><a class="more-link" href="#/timer">Timer<span class="more-sub">Focus blocks and short sessions</span></a></li>
+        <li><a class="more-link" href="#/settings">Settings<span class="more-sub">Theme, backup, restore</span></a></li>
+      </ul>
+    </nav>
+  </section>
+
+  <section class="view" data-view="settings" hidden>
+
+    <h2>Appearance</h2>
+    <div class="field">
+      <label for="theme-select">Theme</label>
+      <select id="theme-select">
+        <option value="auto">Auto (dark after 8pm)</option>
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+    </div>
+
+    <h2>Saving check</h2>
+    <div class="field">
+      <label for="test-note">A note that should survive closing the app</label>
+      <input id="test-note" type="text" autocomplete="off"
+             placeholder="Type anything, close the tab, come back">
+      <p class="hint" id="test-note-status"></p>
+    </div>
+
+    <h2>Backup</h2>
+    <p class="hint">Export writes everything to a single JSON file. Keep a copy
+    somewhere safe; import restores it on this or any other device.</p>
+    <div class="btn-row">
+      <button type="button" id="export-btn">Export data</button>
+      <button type="button" id="import-btn">Import data</button>
+      <input type="file" id="import-file" accept=".json,application/json"
+             class="visually-hidden" aria-label="Choose backup file to import">
+    </div>
+    <p class="hint" id="backup-status" role="status"></p>
+
+    <h2>Storage</h2>
+    <p class="hint" id="storage-status"></p>
+
+  </section>
+
+</main>
+
+<nav class="bottom-nav" aria-label="Main">
+  <a href="#/today" data-nav="today"><span class="nav-icon" aria-hidden="true">☀</span>Today</a>
+  <a href="#/quiz" data-nav="quiz"><span class="nav-icon" aria-hidden="true">?</span>Quiz</a>
+  <a href="#/errors" data-nav="errors"><span class="nav-icon" aria-hidden="true">✎</span>Errors</a>
+  <a href="#/more" data-nav="more"><span class="nav-icon" aria-hidden="true">⋯</span>More</a>
+</nav>
+
+<!-- Data files are plain scripts assigning globals, so everything works from
+     file:// with no server. They are stubs until later phases fill them. -->
+<script src="data/questions.js"></script>
+<script src="data/glossary.js"></script>
+<script src="data/schedule.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
