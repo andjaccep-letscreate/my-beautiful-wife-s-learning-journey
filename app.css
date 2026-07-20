@@ -418,6 +418,44 @@ button {
   border-color: var(--accent);
 }
 
+/* ---- flag a question ---- */
+.flag-area { margin: 14px 0 4px; }
+.flag-btn {
+  width: 100%;
+  color: var(--text-soft);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  font-weight: 500;
+}
+.flag-btn.flag-on { color: var(--accent); border-color: var(--accent); }
+
+/* shared textarea styling for flag notes and error notes */
+.flag-note, .err-note {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--text);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  resize: vertical;
+}
+.err-note { background: var(--bg); }
+
+/* ---- flagged-questions list (Settings) ---- */
+.flag-list { display: flex; flex-direction: column; gap: 12px; margin: 8px 0; }
+.flag-card {
+  padding: 12px 14px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.flag-card .err-stem { margin: 6px 0 8px; }
+.flag-note-view { color: var(--text-soft); font-size: 0.9rem; margin: 4px 0 8px; }
+
 /* ---- Print (fleshed out in Phase E) ---- */
 @media print {
   .bottom-nav, .skip-link, .notice { display: none; }

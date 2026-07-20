@@ -172,6 +172,8 @@
       renderErrors();
     } else if (name === 'progress') {
       renderPerformance();
+    } else if (name === 'settings') {
+      renderFlags();
     }
   }
 
@@ -274,6 +276,9 @@
       if (e.target.files && e.target.files[0]) importData(e.target.files[0]);
       e.target.value = '';   /* allow re-importing the same file */
     });
+
+    var flagsBtn = document.getElementById('export-flags-btn');
+    if (flagsBtn) flagsBtn.addEventListener('click', exportFlags);
   }
 
   /* =========================================================================
@@ -285,10 +290,12 @@
   var BLOCK_SIZE = 10;      // questions pulled per self-test block
 
   /* How many questions a system must have been answered before "weakest 3"
-     will rank it. Below this, we tell her plainly instead of guessing — a
-     single lucky/unlucky answer should not label a whole system "weakest".
-     (Flagged to Andres as a UX decision, not a silent default.) */
-  var WEAKEST_MIN_ANSWERED = 5;
+     will rank it. The bank holds 4 questions per system, so this is set to a
+     full pass (4): a system must have been seen once before it can be called
+     a weak spot. Below the threshold, the picker refuses to guess and says
+     what's missing instead of silently substituting a fallback.
+     (Flagged to Andres as a UX decision — see the hand-off note.) */
+  var WEAKEST_MIN_ANSWERED = 4;
 
   var CONFIDENCE = [
     { key: 'knew',     label: 'Knew it cold' },
@@ -329,7 +336,23 @@
     return node;
   }
 
-  function bank() { return (window.STEP1_QUESTIONS || []); }
+  /* Normalize the seed file's compact shape ({s,q,o,a,e}) into the fields the
+     engine uses, and give each item a stable id = its index in the source
+     array (the file never reorders, so the index is a durable key for the
+     error log and question flags). */
+  function bank() {
+    var raw = window.QUESTIONS || [];
+    return raw.map(function (item, i) {
+      return {
+        id: i,
+        system: item.s,
+        stem: item.q,
+        options: item.o,
+        answer: item.a,
+        explanation: item.e
+      };
+    });
+  }
 
   function allSystems() {
     var seen = {}, out = [], b = bank(), i;
@@ -403,15 +426,34 @@
       ts: Date.now(),
       qid: q.id,
       system: q.system,
-      topic: q.topic,
       stem: q.stem,
       correctText: q.options[q.answer],
       selectedText: q.options[selectedIndex],
       explanation: q.explanation,
       confidence: confKey,
-      tag: ''
+      tag: '',
+      note: ''
     });
     saveErrors(errors);
+  }
+
+  /* ---- flagged-question store ----
+     flags[qid] = { note, ts }. One flag per question; re-flagging updates it.
+     This is the Phase C feedback channel: her real complaints, exportable. */
+  function loadFlags() { return load('flags', {}); }
+  function saveFlags(f) { save('flags', f); }
+  function isFlagged(qid) { return !!loadFlags()[qid]; }
+  function toggleFlag(qid) {
+    var f = loadFlags();
+    if (f[qid]) delete f[qid];
+    else f[qid] = { note: '', ts: Date.now() };
+    saveFlags(f);
+  }
+  function setFlagNote(qid, note) {
+    var f = loadFlags();
+    if (!f[qid]) f[qid] = { note: '', ts: Date.now() };
+    f[qid].note = note;
+    saveFlags(f);
   }
 
   function confLabel(key) {
@@ -563,9 +605,35 @@
     }
     root.appendChild(opts);
 
+    /* one-tap flag, available before or after answering */
+    root.appendChild(renderFlagControl(q));
+
     /* placeholder areas filled after she answers */
     root.appendChild(el('div', { id: 'conf-area' }));
     root.appendChild(el('div', { id: 'reveal-area' }));
+  }
+
+  function renderFlagControl(q) {
+    var wrap = el('div', { class: 'flag-area', id: 'flag-area' });
+    var flagged = isFlagged(q.id);
+    wrap.appendChild(el('button', {
+      type: 'button', class: flagged ? 'flag-btn flag-on' : 'flag-btn',
+      'aria-pressed': flagged ? 'true' : 'false',
+      onclick: function () { toggleFlag(q.id); refreshFlagArea(q); }
+    }, flagged ? '⚑ Flagged for review' : '⚑ Flag this question'));
+    if (flagged) {
+      var note = el('textarea', { class: 'flag-note', rows: '2',
+        placeholder: "Optional: what's wrong or confusing? (saved for review)",
+        oninput: function (e) { setFlagNote(q.id, e.target.value); } });
+      note.value = (loadFlags()[q.id] || {}).note || '';
+      wrap.appendChild(note);
+    }
+    return wrap;
+  }
+
+  function refreshFlagArea(q) {
+    var old = document.getElementById('flag-area');
+    if (old && old.parentNode) old.parentNode.replaceChild(renderFlagControl(q), old);
   }
 
   function onSelectOption(realIndex) {
@@ -799,7 +867,24 @@
       })(ERROR_TAGS[i]);
     }
     card.appendChild(tagRow);
+
+    /* free-text note she can add while reviewing */
+    card.appendChild(el('p', { class: 'err-tag-label', text: 'Your note:' }));
+    var note = el('textarea', { class: 'err-note', rows: '2',
+      placeholder: 'What tripped you up? What will you remember next time?',
+      onchange: function (ev) { setNote(e.eid, ev.target.value); } });
+    note.value = e.note || '';
+    card.appendChild(note);
+
     return card;
+  }
+
+  function setNote(eid, note) {
+    var errors = loadErrors();
+    for (var i = 0; i < errors.length; i++) {
+      if (errors[i].eid === eid) { errors[i].note = note; break; }
+    }
+    saveErrors(errors);
   }
 
   function setTag(eid, tag) {
@@ -820,10 +905,74 @@
     return (d.getMonth() + 1) + '/' + d.getDate();
   }
 
+  /* =========================================================================
+     FLAGGED QUESTIONS (Settings) — surface + export for Phase C feedback
+     ====================================================================== */
+
+  function renderFlags() {
+    var root = document.getElementById('flags-root');
+    if (!root) return;
+    root.innerHTML = '';
+    var f = loadFlags();
+    var qids = Object.keys(f);
+    if (!qids.length) {
+      root.appendChild(el('p', { class: 'empty', text:
+        'Nothing flagged yet. Tap "Flag this question" during a self-test to ' +
+        'collect the ones worth a second look here.' }));
+      return;
+    }
+    var b = bank();
+    qids.sort(function (a, c) { return f[c].ts - f[a].ts; });
+    var list = el('div', { class: 'flag-list' });
+    for (var i = 0; i < qids.length; i++) {
+      var qid = qids[i];
+      var q = b[qid];
+      var card = el('div', { class: 'flag-card' });
+      card.appendChild(el('span', { class: 'err-sys', text: q ? q.system : 'question ' + qid }));
+      card.appendChild(el('p', { class: 'err-stem', text: q ? q.stem : '(not found)' }));
+      if (f[qid].note) card.appendChild(el('p', { class: 'flag-note-view', text: 'Note: ' + f[qid].note }));
+      card.appendChild(el('button', {
+        type: 'button', class: 'link-btn',
+        onclick: (function (id) { return function () { toggleFlag(id); renderFlags(); }; })(qid)
+      }, 'Remove'));
+      list.appendChild(card);
+    }
+    root.appendChild(list);
+  }
+
+  function exportFlags() {
+    var f = loadFlags(), b = bank(), out = [], qid;
+    for (qid in f) {
+      var q = b[qid];
+      out.push({
+        qid: Number(qid),
+        system: q ? q.system : null,
+        stem: q ? q.stem : null,
+        note: f[qid].note || '',
+        flaggedAt: new Date(f[qid].ts).toISOString()
+      });
+    }
+    var payload = {
+      app: 'step1-study', type: 'flagged-questions',
+      exportedAt: new Date().toISOString(), count: out.length, flags: out
+    };
+    var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'step1-flagged-' + new Date().toISOString().slice(0, 10) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setStatus('flags-status', 'Exported ' + out.length + ' flagged question' +
+      (out.length === 1 ? '' : 's') + '.');
+  }
+
   /* Exposed for the headless smoke test only (no effect on normal use). */
   window.__step1test = {
-    loadPerf: loadPerf, loadErrors: loadErrors, weakestSystems: weakestSystems,
-    startQuiz: startQuiz, allSystems: allSystems,
+    loadPerf: loadPerf, loadErrors: loadErrors, loadFlags: loadFlags,
+    weakestSystems: weakestSystems, startQuiz: startQuiz, allSystems: allSystems,
     getQuiz: function () { return quiz; }
   };
 
