@@ -762,9 +762,13 @@
       if (answered) anyData = true;
       var pct = answered ? Math.round((got / answered) * 100) : 0;
 
+      /* "Confident miss" = wrong while feeling sure. Guard each bucket so a
+         restored backup or partial data can't throw and blank the view. */
       if (s && s.conf) {
-        confidentMisses += (s.conf.knew.n - s.conf.knew.correct) +
-                           (s.conf.sure.n - s.conf.sure.correct);
+        ['knew', 'sure'].forEach(function (k) {
+          var c = s.conf[k];
+          if (c) confidentMisses += (c.n - c.correct);
+        });
       }
 
       var rowHead = el('div', { class: 'perf-head' }, [
