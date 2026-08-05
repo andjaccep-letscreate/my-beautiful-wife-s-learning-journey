@@ -1,0 +1,463 @@
+/* ===========================================================================
+   Step 1 study app — all styles.
+   Mobile-first, one-handed: primary controls live at the bottom of the screen,
+   tap targets are at least 44px, and the dark theme is genuinely dark for use
+   in a room where someone is sleeping.
+   ======================================================================== */
+
+/* ---- Theme tokens -------------------------------------------------------
+   Light and dark are both defined here; app.js sets data-theme on <html>.
+   All colors pass WCAG AA contrast against their backgrounds. */
+:root {
+  --bg: #fafaf7;
+  --bg-raised: #ffffff;
+  --text: #21242a;
+  --text-soft: #545a66;      /* 7.0:1 on --bg */
+  --accent: #1a5fb4;         /* links/buttons, 6.4:1 on --bg */
+  --accent-text: #ffffff;
+  --border: #d4d6db;
+  --focus: #1a5fb4;
+  --notice-bg: #eef1f6;
+  --ok: #1a7f37;             /* correct-answer green, 4.7:1 on --bg */
+  --ok-bg: #e7f4ec;
+  --no: #b3261e;             /* wrong-answer red, 5.9:1 on --bg */
+  --no-bg: #fbebe9;
+}
+
+:root[data-theme="dark"] {
+  --bg: #000000;             /* genuinely dark, not dark grey */
+  --bg-raised: #101014;
+  --text: #d8d9dd;           /* 15.6:1 on black */
+  --text-soft: #9a9ca6;      /* 7.4:1 on black */
+  --accent: #8ab4f8;         /* 9.6:1 on black */
+  --accent-text: #00122e;
+  --border: #2a2b31;
+  --focus: #8ab4f8;
+  --notice-bg: #101418;
+  --ok: #6fd18c;             /* correct-answer green, 9.8:1 on black */
+  --ok-bg: #0d1a11;
+  --no: #f2a3a0;             /* wrong-answer red, soft on black, 8.4:1 */
+  --no-bg: #1a0e0d;
+}
+
+/* ---- Reset / base ---- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 100%; }
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.55;
+  min-height: 100vh;
+  /* Room for the fixed bottom nav plus phone home-bar inset. */
+  padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+}
+
+a { color: var(--accent); }
+
+/* Visible keyboard focus everywhere. */
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ---- Skip link (hidden until focused) ---- */
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -48px;
+  background: var(--bg-raised);
+  color: var(--accent);
+  padding: 12px 16px;
+  border-radius: 6px;
+  z-index: 20;
+}
+.skip-link:focus { top: 8px; }
+
+/* ---- Header ---- */
+.topbar {
+  padding: 14px 18px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.topbar h1 { font-size: 1.25rem; font-weight: 600; }
+
+/* ---- Notices (calm, one-time) ---- */
+.notice {
+  margin: 12px 16px 0;
+  padding: 12px 14px;
+  background: var(--notice-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-soft);
+  font-size: 0.95rem;
+}
+
+/* ---- Main / views ---- */
+main {
+  padding: 16px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+main:focus { outline: none; }  /* focused programmatically on route change */
+
+.view h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 22px 0 8px;
+}
+.view h2:first-child { margin-top: 4px; }
+
+.empty {
+  color: var(--text-soft);
+  margin: 10px 0;
+}
+
+/* ---- Forms ---- */
+.field { margin: 10px 0 16px; }
+
+label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+input[type="text"], select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  font-size: 1rem;
+  color: var(--text);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.hint {
+  color: var(--text-soft);
+  font-size: 0.9rem;
+  margin: 6px 0;
+}
+
+/* ---- Buttons ---- */
+button {
+  min-height: 44px;
+  padding: 10px 18px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--accent-text);
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+/* ---- "More" list ---- */
+.more-list { list-style: none; }
+
+.more-link {
+  display: block;
+  min-height: 44px;
+  padding: 12px 14px;
+  margin: 8px 0;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 500;
+}
+.more-sub {
+  display: block;
+  font-weight: 400;
+  font-size: 0.88rem;
+  color: var(--text-soft);
+}
+
+/* ---- Bottom navigation (one-handed reach) ---- */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: var(--bg-raised);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  z-index: 10;
+}
+
+.bottom-nav a {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 56px;
+  font-size: 0.8rem;
+  text-decoration: none;
+  color: var(--text-soft);
+}
+
+.bottom-nav a[aria-current="page"] {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.nav-icon { font-size: 1.15rem; line-height: 1; }
+
+/* ---- Utilities ---- */
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- Reduced motion: no animation anywhere it matters ---- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* =========================================================================
+   PHASE B — self-test, performance, error log
+   ========================================================================= */
+
+.primary-btn { width: 100%; margin-top: 14px; }
+.link-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+/* secondary (quick-pick) buttons in a row read as outlines, not solid */
+.btn-row button[data-act] {
+  color: var(--accent);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  flex: 1;
+}
+
+/* ---- system picker ---- */
+.sys-picker { margin: 8px 0 4px; }
+.sys-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 10px 12px;
+  margin: 8px 0;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.sys-row input[type="checkbox"] { width: 22px; height: 22px; flex: none; }
+.sys-name { display: flex; flex-direction: column; }
+.sys-sub { font-weight: 400; font-size: 0.85rem; color: var(--text-soft); }
+
+/* ---- running a block ---- */
+.quiz-progress { color: var(--text-soft); font-size: 0.9rem; margin: 4px 0 10px; }
+.quiz-stem { font-size: 1.05rem; margin: 6px 0 14px; }
+
+.opt-list { display: flex; flex-direction: column; gap: 10px; }
+.opt-btn {
+  width: 100%;
+  text-align: left;
+  min-height: 48px;
+  color: var(--text);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  font-weight: 400;
+  line-height: 1.4;
+}
+.opt-btn:disabled { cursor: default; opacity: 1; }
+.opt-picked { border-color: var(--accent); }
+.opt-correct {
+  border-color: var(--ok);
+  background: var(--ok-bg);
+  color: var(--text);
+  font-weight: 600;
+}
+.opt-wrong {
+  border-color: var(--no);
+  background: var(--no-bg);
+  color: var(--text);
+}
+
+.conf-q { margin: 16px 0 8px; font-weight: 600; }
+.conf-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.conf-btn {
+  flex: 1 1 44%;
+  color: var(--accent);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  font-weight: 500;
+}
+
+.verdict { font-weight: 600; margin: 16px 0 6px; }
+.verdict-ok { color: var(--ok); }
+.verdict-no { color: var(--no); }
+.reveal-line { margin: 6px 0; }
+.explanation {
+  margin: 10px 0 4px;
+  padding: 12px 14px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-soft);
+  font-size: 0.95rem;
+}
+
+.result-score { font-size: 1.3rem; font-weight: 600; margin: 8px 0; }
+
+/* ---- performance bars ---- */
+.perf-list { margin: 8px 0; }
+.perf-item { margin: 12px 0; }
+.perf-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+  font-size: 0.92rem;
+}
+.perf-name { font-weight: 500; }
+.perf-num { color: var(--text-soft); flex: none; }
+.perf-bar {
+  height: 10px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.perf-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 6px 0 0 6px;
+}
+
+/* ---- error log ---- */
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin: 6px 0 12px;
+  font-weight: 500;
+}
+.filter-row input { width: 22px; height: 22px; flex: none; }
+
+.err-list { display: flex; flex-direction: column; gap: 14px; }
+.err-card {
+  padding: 14px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.err-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: var(--text-soft);
+  margin-bottom: 8px;
+}
+.err-sys { font-weight: 600; color: var(--accent); }
+.err-stem { margin: 4px 0 10px; }
+.err-line { margin: 4px 0; font-size: 0.95rem; }
+.err-your { color: var(--text-soft); }
+.err-conf { font-style: italic; }
+.err-why {
+  margin: 10px 0;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-soft);
+  font-size: 0.92rem;
+}
+.err-tag-label { font-size: 0.9rem; font-weight: 500; margin: 8px 0 6px; }
+.tag-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.tag-btn {
+  flex: 1 1 30%;
+  min-height: 44px;
+  font-size: 0.9rem;
+  color: var(--accent);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-weight: 500;
+}
+.tag-active {
+  color: var(--accent-text);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ---- flag a question ---- */
+.flag-area { margin: 14px 0 4px; }
+.flag-btn {
+  width: 100%;
+  color: var(--text-soft);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  font-weight: 500;
+}
+.flag-btn.flag-on { color: var(--accent); border-color: var(--accent); }
+
+/* shared textarea styling for flag notes and error notes */
+.flag-note, .err-note {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--text);
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  resize: vertical;
+}
+.err-note { background: var(--bg); }
+
+/* ---- flagged-questions list (Settings) ---- */
+.flag-list { display: flex; flex-direction: column; gap: 12px; margin: 8px 0; }
+.flag-card {
+  padding: 12px 14px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.flag-card .err-stem { margin: 6px 0 8px; }
+.flag-note-view { color: var(--text-soft); font-size: 0.9rem; margin: 4px 0 8px; }
+
+/* ---- Print (fleshed out in Phase E) ---- */
+@media print {
+  .bottom-nav, .skip-link, .notice { display: none; }
+  body { padding: 0; background: #fff; color: #000; }
+}
